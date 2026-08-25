@@ -34,28 +34,31 @@ public class Binancevision {
             "User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36"
         ]
     }
-
-    public func get_ticker_by_symbol(symbol: String) async throws -> Any {
-        guard let url = URL(string: "\(api)/ticker/24hr?symbol=\(symbol)") else {
+    
+    private func fetchJSON(from urlString: String,method: HTTPMethod = .get,body: Data? = nil,queryParameters: [String: String]? = nil) async throws -> Any {
+        var urlComponents = URLComponents(string: urlString)
+        if let queryParameters = queryParameters {
+            urlComponents?.queryItems = queryParameters.map { URLQueryItem(name: $0.key, value: $0.value) }
+        }
+        guard let url = urlComponents?.url else {
             throw NSError(domain: "Invalid URL", code: -1)
         }
         var request = URLRequest(url: url)
-        request.httpMethod = "GET"
+        request.httpMethod = method.rawValue
         request.allHTTPHeaderFields = headers
+        if let body = body {
+            request.httpBody = body
+            request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        }
         let (data, _) = try await URLSession.shared.data(for: request)
-        let json = try JSONSerialization.jsonObject(with: data)
-        return json
+        return try JSONSerialization.jsonObject(with: data)
     }
 
-    public func get_list_tickers() async throws -> Any {
-        guard let url = URL(string: "\(api)/ticker/24hr") else {
-            throw NSError(domain: "Invalid URL", code: -1)
-        }
-        var request = URLRequest(url: url)
-        request.httpMethod = "GET"
-        request.allHTTPHeaderFields = headers
-        let (data, _) = try await URLSession.shared.data(for: request)
-        let json = try JSONSerialization.jsonObject(with: data)
-        return json
+    public func getTickerBySymbol(symbol: String) async throws -> Any {
+        return try await fetchJSON(from: "\(api)/ticker/24hr?symbol=\(symbol)")
+    }
+
+    public func getListTickers() async throws -> Any {
+        return try await fetchJSON(from: "\(api)/ticker/24hr")
     }
 }
