@@ -7,7 +7,7 @@ import binancevision
 let client = Binancevision()
 
 do {
-    let tickers = try await client.get_list_tickers()
+    let tickers = try await client.getListTickers()
     print(tickers)
 } catch {
     print("Error: \(error)")
